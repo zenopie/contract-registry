@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 
 use crate::msg::{
-    AllContractsResponse, ContractResponse, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg,
+    AllContractsResponse, ContractResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, OwnerResponse, QueryMsg,
 };
 use crate::state::{GlobalConfig, CONTRACTS, GLOBAL_CONFIG};
 
@@ -100,10 +100,16 @@ fn execute_remove_contract(
 }
 
 #[entry_point]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+    Ok(Response::new().add_attribute("action", "migrate"))
+}
+
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetOwner {} => to_binary(&query_owner(deps)?),
         QueryMsg::GetContract { name } => to_binary(&query_contract(deps, name)?),
+        QueryMsg::GetContracts { names } => to_binary(&query_contracts(deps, names)?),
         QueryMsg::GetAllContracts {} => to_binary(&query_all_contracts(deps)?),
     }
 }
@@ -121,6 +127,17 @@ fn query_contract(deps: Deps, name: String) -> StdResult<ContractResponse> {
         .ok_or_else(|| StdError::generic_err(format!("Contract '{}' not found", name)))?;
 
     Ok(ContractResponse { name, info })
+}
+
+fn query_contracts(deps: Deps, names: Vec<String>) -> StdResult<AllContractsResponse> {
+    let mut contracts = Vec::new();
+    for name in names {
+        let info = CONTRACTS
+            .get(deps.storage, &name)
+            .ok_or_else(|| StdError::generic_err(format!("Contract '{}' not found", name)))?;
+        contracts.push(ContractResponse { name, info });
+    }
+    Ok(AllContractsResponse { contracts })
 }
 
 fn query_all_contracts(deps: Deps) -> StdResult<AllContractsResponse> {

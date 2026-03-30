@@ -10,6 +10,12 @@ pub struct InstantiateMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+pub enum MigrateMsg {
+    Migrate {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     /// Update the global owner
     UpdateOwner {
@@ -38,6 +44,11 @@ pub enum QueryMsg {
     /// Get a specific contract's info by name
     GetContract {
         name: String,
+    },
+
+    /// Get multiple contracts by name
+    GetContracts {
+        names: Vec<String>,
     },
 
     /// Get all registered contracts
